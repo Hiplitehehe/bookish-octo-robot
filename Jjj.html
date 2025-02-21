@@ -1,0 +1,12 @@
+async function saveNote() {
+    const noteInput = document.getElementById('noteInput').value.trim();
+    if (noteInput) {
+        await fetch('http://localhost:5000/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: noteInput })
+        });
+        document.getElementById('noteInput').value = '';  // Clear input
+        displayNotes();  // Refresh notes display
+    }
+}

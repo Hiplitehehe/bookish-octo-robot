@@ -1,12 +1,45 @@
-async function saveNote() {
-    const noteInput = document.getElementById('noteInput').value.trim();
-    if (noteInput) {
-        await fetch('http://localhost:5000/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: noteInput })
-        });
-        document.getElementById('noteInput').value = '';  // Clear input
-        displayNotes();  // Refresh notes display
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Notes App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #notesContainer { max-width: 500px; margin: auto; }
+        textarea { width: 100%; height: 100px; }
+        .note { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Public Notes</h2>
+    <textarea id="noteInput" placeholder="Write your note here..."></textarea>
+    <br>
+    <button onclick="saveNote()">Save Note</button>
+    <button onclick="displayNotes()">Refresh Notes</button>
+    <div id="notesContainer"></div><script>
+    async function saveNote() {
+        const noteInput = document.getElementById('noteInput').value.trim();
+        if (noteInput) {
+            await fetch('http://localhost:5000/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: noteInput })
+            });
+            document.getElementById('noteInput').value = '';
+            displayNotes();
+        }
     }
-}
+
+    async function displayNotes() {
+        const response = await fetch('http://localhost:5000/notes');
+        const notes = await response.json();
+        const notesContainer = document.getElementById('notesContainer');
+        notesContainer.innerHTML = notes.map(note => `<div class="note">${note}</div>`).join('');
+    }
+
+    displayNotes();
+</script>
+
+</body>
+</html>

@@ -53,7 +53,7 @@
         <div id="notes-container">
             {% for note in user_notes %}
                 <div class="note">
-                    <a href="http://n9.mcst.io:35668/view_note/title/{{ note['title'] }}">
+                    <a href="http://n9.mcst.io:35668/view_note/{{ note['title'] }}">
                         <h3>{{ note['title'] }}</h3>
                     </a>
                     <p>{{ note['content'] }}</p>

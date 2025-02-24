@@ -1,60 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Notes</title>
-</head>
-<body>
-    <h2>Store Notes on GitHub</h2>
-    <textarea id="noteInput" placeholder="Enter your note..."></textarea><br>
-    <button onclick="uploadNote()">Upload Note</button>
-
-    <h2>Saved Notes</h2>
-    <ul id="notesList"></ul>
-
-    <script>
-        const API_URL = "http://n9.mcst.io:35668/notes";  // Flask API URL
-
-        // Upload Note
-        async function uploadNote() {
-            const note = document.getElementById("noteInput").value;
-            if (!note) {
-                alert("Please enter a note!");
-                return;
-            }
-
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content: note })
-            });
-
-            if (response.ok) {
-                alert("Note saved successfully!");
-                document.getElementById("noteInput").value = "";
-                fetchNotes();
-            } else {
-                alert("Error saving note!");
-            }
-        }
-
-        // Fetch Notes
-        async function fetchNotes() {
-            const response = await fetch(API_URL);
-            const notes = await response.json();
-            const notesList = document.getElementById("notesList");
-            notesList.innerHTML = "";
-
-            notes.forEach(note => {
-                const li = document.createElement("li");
-                li.textContent = note.content;
-                notesList.appendChild(li);
-            });
-        }
-
-        // Load notes on page load
-        fetchNotes();
-    </script>
-</body>
+<html>
+  <head>
+    <title>Note Web</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+      <h1 class="title">Note Web</h1>
+      <input type="text" id="noteInput" placeholder="Enter your note here" />
+      <button id="addNoteButton">Add Note</button>
+      <div id="notesContainer"></div>
+      <p id="currentTime"></p>
+      <script src="script.js"></script>
+  </body>
 </html>

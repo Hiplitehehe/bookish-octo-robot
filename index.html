@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +37,7 @@
         // Function to fetch notes from a JSON file (or an API endpoint)
         async function fetchNotes() {
             try {
-                const response = await fetch('notes.json'); // Replace with your JSON file path or API endpoint
+                const response = await fetch('https://raw.githubusercontent.com/Hiplitehehe/Notes/main/Notes.json'); // Use the raw GitHub URL
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

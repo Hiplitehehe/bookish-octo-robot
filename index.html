@@ -28,8 +28,23 @@
 
     <p id="welcomeMessage">Welcome, User! You can view your notes.</p>
 
-    <h2>Your Notes</h2>
+    <div id="adminPanelLink" style="display:none;"><a href="admin.html">Admin Panel</a></div>
+    <button onclick="showCreateNoteForm()">Create Note</button>
+    <a href="login.html">Login</a>
+    <a href="register.html">Register</a>
+    <a href="#" onclick="logout()">Logout</a>
 
+    <div id="createNoteForm" style="display: none;">
+        <h2>Create New Note</h2>
+        <input type="text" id="noteTitle" placeholder="Note Title"><br>
+        <textarea id="noteContent" placeholder="Note Content"></textarea><br>
+        <input type="text" id="universeId" placeholder="Roblox Universe ID"><br>
+        <input type="file" id="noteImage"><br>
+        <button onclick="createNote()">Create</button>
+        <button onclick="hideCreateNoteForm()">Cancel</button>
+    </div>
+
+    <h2>Your Notes</h2>
     <ul id="notesList">
     </ul>
 
@@ -40,7 +55,8 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return await response.json();
+                const notes = await response.json();
+                return notes;
             } catch (error) {
                 console.error('Error fetching notes:', error);
                 return [];
@@ -52,7 +68,6 @@
             notesList.innerHTML = "";
 
             let notesToDisplay = filteredNotes;
-
             if (!notesToDisplay) {
                 notesToDisplay = await fetchNotes();
             }
@@ -83,12 +98,77 @@
             displayNotes(filteredNotes);
         }
 
-        displayNotes();
-
-        const isAdmin = false;
-        if (isAdmin) {
-            document.getElementById("welcomeMessage").textContent = "Welcome, Admin! You can manage all notes.";
+        async function checkLogin() {
+          const username = localStorage.getItem('username');
+          const isAdmin = localStorage.getItem('isAdmin');
+          if (username) {
+              document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+              document.querySelector('a[href="login.html"]').style.display = 'none';
+              document.querySelector('a[href="register.html"]').style.display = 'none';
+              if (isAdmin === 'true') {
+                  document.getElementById("adminPanelLink").style.display = 'block';
+                  document.getElementById("welcomeMessage").textContent = `Welcome, Admin ${username}!`;
+              }
+          } else {
+              document.querySelector('a[href="#"]').style.display = 'none';
+              document.querySelector('button[onclick="showCreateNoteForm()"]').style.display = 'none';
+          }
         }
+
+        function logout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('isAdmin');
+            window.location.href = 'index.html';
+        }
+
+        function showCreateNoteForm() {
+            document.getElementById('createNoteForm').style.display = 'block';
+        }
+
+        function hideCreateNoteForm() {
+            document.getElementById('createNoteForm').style.display = 'none';
+        }
+
+        async function createNote() {
+            const title = document.getElementById('noteTitle').value;
+            const content = document.getElementById('noteContent').value;
+            const universeId = document.getElementById('universeId').value;
+            const imageFile = document.getElementById('noteImage').files[0];
+            const username = localStorage.getItem('username');
+
+            if (!title || !content || !universeId || !imageFile || !username) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+            formData.append('universeId', universeId);
+            formData.append('image', imageFile);
+            formData.append('username', username);
+
+            try {
+                const response = await fetch('/create_note', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Note created successfully!');
+                    hideCreateNoteForm();
+                    displayNotes();
+                } else {
+                    alert('Failed to create note.');
+                }
+            } catch (error) {
+                console.error('Error creating note:', error);
+                alert('An error occurred while creating the note.');
+            }
+        }
+
+        checkLogin();
+        displayNotes();
     </script>
 </body>
 </html>

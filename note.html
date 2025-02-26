@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Details</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        img { max-width: 200px; height: auto; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="noteDetails">
+        </div>
+
+    <script>
+        async function fetchNotes() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/Hiplitehehe/Notes/main/Notes.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching notes:', error);
+                return [];
+            }
+        }
+
+        async function displayNoteDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const noteTitle = urlParams.get('title');
+
+            if (!noteTitle) {
+                document.getElementById('noteDetails').innerHTML = '<p>Note title not provided.</p>';
+                return;
+            }
+
+            const notes = await fetchNotes();
+            const note = notes.find(note => note.title === noteTitle);
+
+            if (!note) {
+                document.getElementById('noteDetails').innerHTML = '<p>Note not found.</p>';
+                return;
+            }
+
+            const noteDetailsDiv = document.getElementById('noteDetails');
+            noteDetailsDiv.innerHTML = `
+                <h2>${note.title}</h2>
+                <p>${note.content}</p>
+                <p>Game: ${note.game_name}</p>
+                <img src="${note.game_image_url}" alt="Game image">
+                <img src="${note.note_image_url}" alt="Note image">
+                <p>Submitted by: ${note.user}</p>
+            `;
+        }
+
+        displayNoteDetails();
+    </script>
+</body>
+</html>

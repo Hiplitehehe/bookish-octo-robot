@@ -26,13 +26,13 @@
         <button type="button" onclick="searchNotes()">Search</button>
     </form>
 
-    <p id="welcomeMessage">Welcome, User! You can view your notes.</p>
+    <p id="welcomeMessage">Welcome, Guest! Please log in.</p>
 
     <div id="adminPanelLink" style="display:none;"><a href="admin.html">Admin Panel</a></div>
-    <button onclick="showCreateNoteForm()">Create Note</button>
-    <a href="login.html">Login</a>
-    <a href="register.html">Register</a>
-    <a href="#" onclick="logout()">Logout</a>
+    <button id="createNoteBtn" onclick="showCreateNoteForm()" style="display:none;">Create Note</button>
+    <a id="loginLink" href="login.html">Login</a>
+    <a id="registerLink" href="register.html">Register</a>
+    <a id="logoutLink" href="#" onclick="logout()" style="display:none;">Logout</a>
 
     <div id="createNoteForm" style="display: none;">
         <h2>Create New Note</h2>
@@ -45,8 +45,7 @@
     </div>
 
     <h2>Your Notes</h2>
-    <ul id="notesList">
-    </ul>
+    <ul id="notesList"></ul>
 
     <script>
         async function fetchNotes() {
@@ -55,8 +54,7 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const notes = await response.json();
-                return notes;
+                return await response.json();
             } catch (error) {
                 console.error('Error fetching notes:', error);
                 return [];
@@ -67,10 +65,7 @@
             const notesList = document.getElementById("notesList");
             notesList.innerHTML = "";
 
-            let notesToDisplay = filteredNotes;
-            if (!notesToDisplay) {
-                notesToDisplay = await fetchNotes();
-            }
+            let notesToDisplay = filteredNotes || await fetchNotes();
 
             notesToDisplay.forEach(note => {
                 const li = document.createElement("li");
@@ -90,32 +85,44 @@
         async function searchNotes() {
             const searchTerm = document.getElementById("searchInput").value.toLowerCase();
             const allNotes = await fetchNotes();
-            const filteredNotes = allNotes.filter(note => {
-                return note.title.toLowerCase().includes(searchTerm) ||
-                       note.content.toLowerCase().includes(searchTerm) ||
-                       note.game_name.toLowerCase().includes(searchTerm);
-            });
+            const filteredNotes = allNotes.filter(note => 
+                note.title.toLowerCase().includes(searchTerm) ||
+                note.content.toLowerCase().includes(searchTerm) ||
+                note.game_name.toLowerCase().includes(searchTerm)
+            );
             displayNotes(filteredNotes);
         }
 
-        async function checkLogin() {
-          const username = localStorage.getItem('username');
-          const isAdmin = localStorage.getItem('isAdmin');
-          if (username) {
-              document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
-              document.querySelector('a[href="login.html"]').style.display = 'none';
-              document.querySelector('a[href="register.html"]').style.display = 'none';
-              if (isAdmin === 'true') {
-                  document.getElementById("adminPanelLink").style.display = 'block';
-                  document.getElementById("welcomeMessage").textContent = `Welcome, Admin ${username}!`;
-              }
-          } else {
-              document.querySelector('a[href="#"]').style.display = 'none';
-              document.querySelector('button[onclick="showCreateNoteForm()"]').style.display = 'none';
-          }
+        function checkLogin() {
+            const username = localStorage.getItem('username');
+            const isAdmin = localStorage.getItem('isAdmin');
+
+            const loginLink = document.getElementById("loginLink");
+            const registerLink = document.getElementById("registerLink");
+            const logoutLink = document.getElementById("logoutLink");
+            const createNoteBtn = document.getElementById("createNoteBtn");
+            const adminPanelLink = document.getElementById("adminPanelLink");
+
+            if (username) {
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+                loginLink.style.display = 'none';
+                registerLink.style.display = 'none';
+                logoutLink.style.display = 'inline-block';
+                createNoteBtn.style.display = 'inline-block';
+
+                if (isAdmin === 'true') {
+                    adminPanelLink.style.display = 'block';
+                    document.getElementById("welcomeMessage").textContent = `Welcome, Admin ${username}!`;
+                }
+            } else {
+                logoutLink.style.display = 'none';
+                createNoteBtn.style.display = 'none';
+                adminPanelLink.style.display = 'none';
+            }
         }
 
-        function logout() {
+        function logout(event) {
+            event.preventDefault();
             localStorage.removeItem('username');
             localStorage.removeItem('isAdmin');
             window.location.href = 'index.html';
@@ -167,6 +174,7 @@
             }
         }
 
+        // Ensure logged-in users see the correct UI
         checkLogin();
         displayNotes();
     </script>

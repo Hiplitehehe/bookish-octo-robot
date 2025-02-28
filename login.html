@@ -63,7 +63,7 @@
         <h2>Login</h2>
         <form id="loginForm">
             <div class="form-group">
-                <label for="username">Email</label>
+                <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div class="form-group">
@@ -92,8 +92,7 @@
             let nameEQ = name + "=";
             let ca = document.cookie.split(';');
             for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                let c = ca[i].trim();
                 if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
             }
             return null;
@@ -108,26 +107,28 @@
                 const response = await fetch('https://autumn-sky-4229.hiplitehehe.workers.dev/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: username, password })
+                    body: JSON.stringify({ username, password }),
+                    credentials: 'include'
                 });
 
-                const result = await response.text();
-
+                const data = await response.json();
                 if (response.ok) {
-                    setCookie('username', username, 7); // Store session for 7 days
+                    setCookie('username', username, 7);
                     window.location.href = 'index.html'; // Redirect to dashboard
                 } else {
-                    errorMessage.textContent = result;
+                    errorMessage.textContent = data.error || 'Login failed.';
                 }
             } catch (error) {
-                errorMessage.textContent = 'Login failed. Try again.';
+                console.error('Login error:', error);
+                errorMessage.textContent = 'An error occurred. Please try again.';
             }
         }
 
-        // Check if user is already logged in
+        // Redirect if already logged in
         window.onload = function() {
-            if (getCookie('username')) {
-                window.location.href = 'index.html'; // Redirect if logged in
+            const username = getCookie('username');
+            if (username) {
+                window.location.href = 'index.html'; // Redirect if already logged in
             }
         };
     </script>

@@ -3,202 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>GitHub OAuth Login</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        h1, h2 { color: #333; }
-        ul { list-style-type: none; padding: 0; }
-        li { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; }
-        img { max-width: 100px; height: auto; margin-right: 10px; }
-        form { display: inline-block; margin-right: 10px; }
-        input[type="text"] { padding: 8px; border: 1px solid #ccc; }
-        button { padding: 8px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h1>Dashboard</h1>
 
-    <form id="searchForm">
-        <input type="text" id="searchInput" placeholder="Search notes">
-        <button type="button" onclick="searchNotes()">Search</button>
-    </form>
-
-    <p id="welcomeMessage">Welcome, Guest! Please log in.</p>
-
-    <div id="adminPanelLink" style="display:none;"><a href="admin.html">Admin Panel</a></div>
-    <button id="createNoteBtn" onclick="showCreateNoteForm()" style="display:none;">Create Note</button>
-    <a id="loginLink" href="https://github.com/login/oauth/authorize?client_id=Ov23liYtXm2iWIE7t3XZ">Login with GitHub</a>
-    <a id="logoutLink" href="#" onclick="logout()" style="display:none;">Logout</a>
-
-    <div id="createNoteForm" style="display: none;">
-        <h2>Create New Note</h2>
-        <input type="text" id="noteTitle" placeholder="Note Title"><br>
-        <textarea id="noteContent" placeholder="Note Content"></textarea><br>
-        <button onclick="createNote()">Create</button>
-        <button onclick="hideCreateNoteForm()">Cancel</button>
-    </div>
-
-    <h2>Your Notes</h2>
-    <ul id="notesList"></ul>
+    <h1>GitHub OAuth Login</h1>
+    
+    <p id="userInfo">Not logged in.</p>
+    
+    <button id="loginBtn" onclick="loginWithGitHub()">Login with GitHub</button>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
 
     <script>
-        async function fetchNotes() {
-            try {
-                const response = await fetch('https://raw.githubusercontent.com/Hiplitehehe/Notes/main/Notes.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return await response.json();
-            } catch (error) {
-                console.error('Error fetching notes:', error);
-                return [];
-            }
+        const CLIENT_ID = "your_github_client_id";  // Replace with your GitHub Client ID
+        const REDIRECT_URI = window.location.origin + "/index.html";  // Your redirect URL
+
+        function loginWithGitHub() {
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+            window.location.href = authUrl;
         }
 
-        async function displayNotes(filteredNotes = null) {
-            const notesList = document.getElementById("notesList");
-            notesList.innerHTML = "";
-
-            let notesToDisplay = filteredNotes || await fetchNotes();
-
-            notesToDisplay.forEach(note => {
-                const li = document.createElement("li");
-                li.innerHTML = `
-                    <h3>${note.title}</h3>
-                    <p>${note.content}</p>
-                    <p>Game: ${note.game_name}</p>
-                    <img src="${note.game_image_url}" alt="Game image">
-                    <img src="${note.note_image_url}" alt="Note image">
-                    <p>Submitted by: ${note.user}</p>
-                    <a href="note.html?title=${encodeURIComponent(note.title)}">View Note</a>
-                `;
-                notesList.appendChild(li);
-            });
-        }
-
-        async function searchNotes() {
-            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-            const allNotes = await fetchNotes();
-            const filteredNotes = allNotes.filter(note => 
-                note.title.toLowerCase().includes(searchTerm) ||
-                note.content.toLowerCase().includes(searchTerm) ||
-                note.game_name.toLowerCase().includes(searchTerm)
-            );
-            displayNotes(filteredNotes);
-        }
-
-        async function fetchGitHubUser() {
+        async function handleGitHubCallback() {
             const params = new URLSearchParams(window.location.search);
-            const code = params.get('code');
+            const code = params.get("code");
 
             if (code) {
                 try {
-                    const response = await fetch('https://autumn-sky-4229.hiplitehehe.workers.dev/callback?code=' + code);
+                    const response = await fetch(`https://autumn-sky-4229.hiplitehehe.workers.dev/github-login?code=${code}`);
                     const data = await response.json();
 
-                    if (data.token) {
-                        localStorage.setItem('token', data.token);
-                        localStorage.setItem('username', data.username);
-                        window.history.replaceState({}, document.title, "/"); // Clean up URL
-                        location.reload(); // Reload to update UI
+                    if (data.username) {
+                        localStorage.setItem("username", data.username);
+                        document.getElementById("userInfo").textContent = `Logged in as: ${data.username}`;
+                        document.getElementById("loginBtn").style.display = "none";
+                        document.getElementById("logoutBtn").style.display = "block";
+
+                        // Remove ?code= from URL after login
+                        window.history.replaceState({}, document.title, "/index.html");
+                    } else {
+                        throw new Error("Login failed.");
                     }
                 } catch (error) {
-                    console.error('Error fetching GitHub user:', error);
-                }
-            } else {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const response = await fetch('https://api.github.com/user', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-
-                    if (response.ok) {
-                        const user = await response.json();
-                        localStorage.setItem('username', user.login);
-                        checkLogin();
-                    }
+                    console.error("GitHub Login Error:", error);
                 }
             }
+        }
+
+        function logout() {
+            localStorage.removeItem("username");
+            document.getElementById("userInfo").textContent = "Not logged in.";
+            document.getElementById("loginBtn").style.display = "block";
+            document.getElementById("logoutBtn").style.display = "none";
         }
 
         function checkLogin() {
-            const username = localStorage.getItem('username');
-
-            const loginLink = document.getElementById("loginLink");
-            const logoutLink = document.getElementById("logoutLink");
-            const createNoteBtn = document.getElementById("createNoteBtn");
-            const adminPanelLink = document.getElementById("adminPanelLink");
-
+            const username = localStorage.getItem("username");
             if (username) {
-                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
-                loginLink.style.display = 'none';
-                logoutLink.style.display = 'inline-block';
-                createNoteBtn.style.display = 'inline-block';
-
-                // Show admin panel link if needed
-                if (username === "Hiplitehehe") {
-                    adminPanelLink.style.display = 'block';
-                }
-            } else {
-                logoutLink.style.display = 'none';
-                createNoteBtn.style.display = 'none';
-                adminPanelLink.style.display = 'none';
+                document.getElementById("userInfo").textContent = `Logged in as: ${username}`;
+                document.getElementById("loginBtn").style.display = "none";
+                document.getElementById("logoutBtn").style.display = "block";
             }
         }
 
-        function logout(event) {
-            event.preventDefault();
-            localStorage.removeItem('username');
-            localStorage.removeItem('token');
-            window.location.href = '/';
-        }
-
-        function showCreateNoteForm() {
-            document.getElementById('createNoteForm').style.display = 'block';
-        }
-
-        function hideCreateNoteForm() {
-            document.getElementById('createNoteForm').style.display = 'none';
-        }
-
-        async function createNote() {
-            const title = document.getElementById('noteTitle').value;
-            const content = document.getElementById('noteContent').value;
-            const username = localStorage.getItem('username');
-
-            if (!title || !content || !username) {
-                alert('Please fill in all fields.');
-                return;
-            }
-
-            const note = { title, content, user: username };
-
-            try {
-                const response = await fetch('https://autumn-sky-4229.hiplitehehe.workers.dev/add_note', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(note)
-                });
-
-                if (response.ok) {
-                    alert('Note created successfully!');
-                    hideCreateNoteForm();
-                    displayNotes();
-                } else {
-                    alert('Failed to create note.');
-                }
-            } catch (error) {
-                console.error('Error creating note:', error);
-                alert('An error occurred while creating the note.');
-            }
-        }
-
-        fetchGitHubUser();
         checkLogin();
-        displayNotes();
+        handleGitHubCallback();
     </script>
+
 </body>
 </html>

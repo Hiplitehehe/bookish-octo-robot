@@ -114,6 +114,12 @@
                     adminPanelLink.style.display = 'block';
                     document.getElementById("welcomeMessage").textContent = `Welcome, Admin ${username}!`;
                 }
+
+                // Redirect to dashboard and remove ?token= from URL
+                if (window.location.search.includes("token=")) {
+                    window.history.replaceState({}, document.title, "/");
+                    location.reload();
+                }
             } else {
                 logoutLink.style.display = 'none';
                 createNoteBtn.style.display = 'none';
@@ -174,7 +180,6 @@
             }
         }
 
-        // Ensure logged-in users see the correct UI
         checkLogin();
         displayNotes();
     </script>

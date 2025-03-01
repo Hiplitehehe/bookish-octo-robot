@@ -62,17 +62,17 @@
 
         function checkLogin() {
             const params = new URLSearchParams(window.location.search);
-            const username = params.get('username');
+            const token = params.get('access_token');
             const loginLink = document.getElementById("loginLink");
             const logoutLink = document.getElementById("logoutLink");
 
-            if (username) {
-                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
-                localStorage.setItem('username', username);
+            if (token) {
+                document.getElementById("welcomeMessage").textContent = "Logged in!";
+                localStorage.setItem('access_token', token);
                 loginLink.style.display = 'none';
                 logoutLink.style.display = 'inline-block';
-            } else if (localStorage.getItem('username')) {
-                document.getElementById("welcomeMessage").textContent = `Welcome, ${localStorage.getItem('username')}!`;
+            } else if (localStorage.getItem('access_token')) {
+                document.getElementById("welcomeMessage").textContent = "Logged in!";
                 loginLink.style.display = 'none';
                 logoutLink.style.display = 'inline-block';
             } else {
@@ -82,7 +82,7 @@
 
         function logout(event) {
             event.preventDefault();
-            localStorage.removeItem('username');
+            localStorage.removeItem('access_token');
             window.location.href = 'index.html';
         }
 

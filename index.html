@@ -4,75 +4,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub OAuth</title>
+    <title>GitHub OAuth Notes</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; }
+        img { max-width: 100px; height: auto; margin-right: 10px; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-    <h1>Welcome, <span id="username">Guest</span></h1>
-    <button id="login">Login with GitHub</button>
-    <button id="logout" style="display: none;">Logout</button>
+    <h1>GitHub OAuth Notes</h1>
+
+    <p id="welcomeMessage">Welcome, Guest! Please log in.</p>
+
+    <a id="loginLink" href="https://autumn-sky-4229.hiplitehehe.workers.dev/login">Login with GitHub</a>
+    <a id="logoutLink" href="#" onclick="logout()" style="display:none;">Logout</a>
+
+    <h2>Your Notes</h2>
+    <ul id="notesList"></ul>
 
     <script>
-        const loginButton = document.getElementById("login");
-        const logoutButton = document.getElementById("logout");
-        const usernameSpan = document.getElementById("username");
-
-        // Extract token from URL
-        function getTokenFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            return params.get("token");
-        }
-
-        // Save token to localStorage
-        function saveToken(token) {
-            localStorage.setItem("github_token", token);
-        }
-
-        // Get token from localStorage
-        function getToken() {
-            return localStorage.getItem("github_token");
-        }
-
-        // Fetch GitHub user info
-        async function fetchGitHubUser(token) {
+        async function fetchNotes() {
             try {
-                const response = await fetch("https://api.github.com/user", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error("Failed to fetch user");
-
-                const user = await response.json();
-                usernameSpan.textContent = user.login;  // Update username
-                loginButton.style.display = "none";
-                logoutButton.style.display = "inline-block";
+                const response = await fetch('https://raw.githubusercontent.com/Hiplitehehe/Notes/main/Notes.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
             } catch (error) {
-                console.error("Error fetching user:", error);
+                console.error('Error fetching notes:', error);
+                return [];
             }
         }
 
-        // Handle login click
-        loginButton.addEventListener("click", () => {
-            window.location.href = "https://autumn-sky-4229.hiplitehehe.workers.dev/login";
-        });
+        async function displayNotes() {
+            const notesList = document.getElementById("notesList");
+            notesList.innerHTML = "";
 
-        // Handle logout click
-        logoutButton.addEventListener("click", () => {
-            localStorage.removeItem("github_token");
-            window.location.href = "index.html";  // Refresh page
-        });
-
-        // Check if token is in URL and store it
-        const urlToken = getTokenFromURL();
-        if (urlToken) {
-            saveToken(urlToken);
-            window.history.replaceState({}, document.title, "index.html"); // Remove token from URL
+            const notes = await fetchNotes();
+            notes.forEach(note => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <h3>${note.title}</h3>
+                    <p>${note.content}</p>
+                    <p>Game: ${note.game_name}</p>
+                    <img src="${note.game_image_url}" alt="Game image">
+                    <img src="${note.note_image_url}" alt="Note image">
+                    <p>Submitted by: ${note.user}</p>
+                    <a href="note.html?title=${encodeURIComponent(note.title)}">View Note</a>
+                `;
+                notesList.appendChild(li);
+            });
         }
 
-        // Load user if token exists
-        const storedToken = getToken();
-        if (storedToken) {
-            fetchGitHubUser(storedToken);
+        function checkLogin() {
+            const params = new URLSearchParams(window.location.search);
+            const username = params.get('username');
+            const loginLink = document.getElementById("loginLink");
+            const logoutLink = document.getElementById("logoutLink");
+
+            if (username) {
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${username}!`;
+                localStorage.setItem('username', username);
+                loginLink.style.display = 'none';
+                logoutLink.style.display = 'inline-block';
+            } else if (localStorage.getItem('username')) {
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${localStorage.getItem('username')}!`;
+                loginLink.style.display = 'none';
+                logoutLink.style.display = 'inline-block';
+            } else {
+                logoutLink.style.display = 'none';
+            }
         }
+
+        function logout(event) {
+            event.preventDefault();
+            localStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        checkLogin();
+        displayNotes();
     </script>
 </body>
 </html>

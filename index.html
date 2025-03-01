@@ -28,19 +28,14 @@
             }
 
             // 🔹 Fetch Approved Notes
-            fetch("https://autumn-sky-4229.hiplitehehe.workers.dev/notes")
-                .then(response => response.json())
-                .then(notes => {
-                    const noteList = document.getElementById("notes");
-                    noteList.innerHTML = "";
-                    notes.forEach(note => {
-                        const li = document.createElement("li");
-                        li.textContent = note.title;
-                        noteList.appendChild(li);
-                    });
-                })
-                .catch(error => console.error("Error fetching notes:", error));
-
+            // 🔹 Fetch Approved Notes Without Parsing
+fetch("https://autumn-sky-4229.hiplitehehe.workers.dev/notes")
+    .then(response => response.text())  // Get raw text instead of JSON
+    .then(text => {
+        document.getElementById("notes").textContent = text; // Show raw response
+    })
+    .catch(error => document.getElementById("notes").textContent = "Error: " + error);
+            
             // 🔹 Handle Note Approval
             document.getElementById("approveForm").addEventListener("submit", (event) => {
                 event.preventDefault();

@@ -8,11 +8,20 @@
     <style>
         body { font-family: Arial, sans-serif; }
         .note { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-        button { cursor: pointer; }
+        button { cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
     <h1>Notes</h1>
+
+    <!-- Note Creation Form -->
+    <div>
+        <input type="text" id="noteTitle" placeholder="Note Title">
+        <textarea id="noteContent" placeholder="Note Content"></textarea>
+        <button onclick="makeNote()">Make Note</button>
+    </div>
+
+    <h2>Approved Notes</h2>
     <div id="notes-container">Loading...</div>
 
     <script>
@@ -23,7 +32,7 @@
             try {
                 const response = await fetch(`${API_URL}/notes`, { headers: { "User-Agent": "HipliteBot/1.0" } });
                 if (!response.ok) throw new Error("Failed to fetch notes");
-                
+
                 const notes = await response.json();
                 const container = document.getElementById("notes-container");
                 container.innerHTML = "";
@@ -45,6 +54,39 @@
                 });
             } catch (error) {
                 document.getElementById("notes-container").innerText = "Error loading notes.";
+            }
+        }
+
+        async function makeNote() {
+            if (!token) {
+                alert("You must be logged in to create notes.");
+                return;
+            }
+
+            const title = document.getElementById("noteTitle").value.trim();
+            const content = document.getElementById("noteContent").value.trim();
+
+            if (!title || !content) {
+                alert("Title and content cannot be empty.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/make-note`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        "User-Agent": "HipliteBot/1.0"
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+
+                const result = await response.json();
+                alert(result.message || "Note created!");
+                fetchNotes();
+            } catch (error) {
+                alert("Failed to create note.");
             }
         }
 
